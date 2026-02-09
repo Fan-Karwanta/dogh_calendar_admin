@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { LogOut, Plus, Trash2, Edit3, Calendar, Clock, MapPin, X, Save, CalendarDays, Building2, ExternalLink, AlertCircle } from 'lucide-react'
+import { LogOut, Plus, Trash2, Edit3, Calendar, Clock, MapPin, X, Save, CalendarDays, Building2, ExternalLink, AlertCircle, Star, Download } from 'lucide-react'
 
 const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`
 
@@ -8,21 +8,27 @@ function Dashboard({ token, onLogout }) {
   const [activeTab, setActiveTab] = useState('events')
   const [events, setEvents] = useState([])
   const [venues, setVenues] = useState([])
+  const [holidays, setHolidays] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [showVenueForm, setShowVenueForm] = useState(false)
+  const [showHolidayForm, setShowHolidayForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
   const [editingVenue, setEditingVenue] = useState(null)
+  const [editingHoliday, setEditingHoliday] = useState(null)
   const [loading, setLoading] = useState(false)
   const [formError, setFormError] = useState('')
   const [venueFormError, setVenueFormError] = useState('')
+  const [holidayFormError, setHolidayFormError] = useState('')
   const [formData, setFormData] = useState({
     title: '',
-    date: '',
+    dateFrom: '',
+    dateTo: '',
     timeFrom: '',
     timeTo: '',
     venue: ''
   })
   const [venueFormData, setVenueFormData] = useState({ name: '' })
+  const [holidayFormData, setHolidayFormData] = useState({ name: '', date: '', type: 'regular', recurring: true })
 
   const authHeaders = { headers: { Authorization: `Bearer ${token}` } }
 
@@ -44,13 +50,23 @@ function Dashboard({ token, onLogout }) {
     }
   }
 
+  const fetchHolidays = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/holidays`, authHeaders)
+      setHolidays(res.data)
+    } catch (err) {
+      if (err.response?.status === 401) onLogout()
+    }
+  }
+
   useEffect(() => {
     fetchEvents()
     fetchVenues()
+    fetchHolidays()
   }, [])
 
   const resetForm = () => {
-    setFormData({ title: '', date: '', timeFrom: '', timeTo: '', venue: '' })
+    setFormData({ title: '', dateFrom: '', dateTo: '', timeFrom: '', timeTo: '', venue: '' })
     setEditingEvent(null)
     setShowForm(false)
     setFormError('')
@@ -61,6 +77,13 @@ function Dashboard({ token, onLogout }) {
     setEditingVenue(null)
     setShowVenueForm(false)
     setVenueFormError('')
+  }
+
+  const resetHolidayForm = () => {
+    setHolidayFormData({ name: '', date: '', type: 'regular', recurring: true })
+    setEditingHoliday(null)
+    setShowHolidayForm(false)
+    setHolidayFormError('')
   }
 
   const handleSubmit = async (e) => {
@@ -113,15 +136,70 @@ function Dashboard({ token, onLogout }) {
     }
   }
 
+  const handleHolidaySubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setHolidayFormError('')
+
+    try {
+      if (editingHoliday) {
+        await axios.put(`${API_URL}/holidays/${editingHoliday._id}`, holidayFormData, authHeaders)
+      } else {
+        await axios.post(`${API_URL}/holidays`, holidayFormData, authHeaders)
+      }
+      await fetchHolidays()
+      resetHolidayForm()
+    } catch (err) {
+      if (err.response?.status === 401) onLogout()
+      else {
+        setHolidayFormError(err.response?.data?.message || 'An error occurred while saving the holiday.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSeedHolidays = async () => {
+    if (!window.confirm('This will seed default Philippine holidays. Continue?')) return
+    setLoading(true)
+    try {
+      await axios.post(`${API_URL}/holidays/seed`, {}, authHeaders)
+      await fetchHolidays()
+    } catch (err) {
+      if (err.response?.status === 401) onLogout()
+      else alert(err.response?.data?.message || 'Error seeding holidays')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClearAllHolidays = async () => {
+    if (!window.confirm('Are you sure you want to delete ALL holidays? This cannot be undone.')) return
+    setLoading(true)
+    try {
+      await axios.delete(`${API_URL}/holidays`, authHeaders)
+      await fetchHolidays()
+    } catch (err) {
+      if (err.response?.status === 401) onLogout()
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleEdit = (event) => {
-    const eventDate = new Date(event.date)
-    const year = eventDate.getFullYear()
-    const month = String(eventDate.getMonth() + 1).padStart(2, '0')
-    const day = String(eventDate.getDate()).padStart(2, '0')
+    const fromDate = new Date(event.dateFrom)
+    const toDate = new Date(event.dateTo)
+    const fmtDate = (d) => {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    }
 
     setFormData({
       title: event.title,
-      date: `${year}-${month}-${day}`,
+      dateFrom: fmtDate(fromDate),
+      dateTo: fmtDate(toDate),
       timeFrom: event.timeFrom,
       timeTo: event.timeTo,
       venue: event.venue
@@ -136,6 +214,22 @@ function Dashboard({ token, onLogout }) {
     setEditingVenue(venue)
     setShowVenueForm(true)
     setVenueFormError('')
+  }
+
+  const handleEditHoliday = (holiday) => {
+    const hDate = new Date(holiday.date)
+    const y = hDate.getFullYear()
+    const m = String(hDate.getMonth() + 1).padStart(2, '0')
+    const d = String(hDate.getDate()).padStart(2, '0')
+    setHolidayFormData({
+      name: holiday.name,
+      date: `${y}-${m}-${d}`,
+      type: holiday.type,
+      recurring: holiday.recurring
+    })
+    setEditingHoliday(holiday)
+    setShowHolidayForm(true)
+    setHolidayFormError('')
   }
 
   const handleDelete = async (id) => {
@@ -158,6 +252,16 @@ function Dashboard({ token, onLogout }) {
     }
   }
 
+  const handleDeleteHoliday = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this holiday?')) return
+    try {
+      await axios.delete(`${API_URL}/holidays/${id}`, authHeaders)
+      await fetchHolidays()
+    } catch (err) {
+      if (err.response?.status === 401) onLogout()
+    }
+  }
+
   const formatDate = (dateStr) => {
     const date = new Date(dateStr)
     return date.toLocaleDateString('en-US', {
@@ -168,8 +272,17 @@ function Dashboard({ token, onLogout }) {
     })
   }
 
+  const formatDateRange = (event) => {
+    const from = new Date(event.dateFrom)
+    const to = new Date(event.dateTo)
+    if (from.toDateString() === to.toDateString()) {
+      return formatDate(event.dateFrom)
+    }
+    return `${formatDate(event.dateFrom)} — ${formatDate(event.dateTo)}`
+  }
+
   const groupedEvents = events.reduce((groups, event) => {
-    const date = new Date(event.date)
+    const date = new Date(event.dateFrom)
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     const label = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
     if (!groups[key]) groups[key] = { label, events: [] }
@@ -244,6 +357,17 @@ function Dashboard({ token, onLogout }) {
             <Building2 className="w-4 h-4" />
             Venues
           </button>
+          <button
+            onClick={() => setActiveTab('holidays')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+              activeTab === 'holidays'
+                ? 'bg-dogh-primary text-white shadow-md shadow-cyan-500/20'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Star className="w-4 h-4" />
+            Holidays
+          </button>
         </div>
 
         {/* ==================== EVENTS TAB ==================== */}
@@ -269,7 +393,7 @@ function Dashboard({ token, onLogout }) {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-slate-800">
-                      {events.filter(e => new Date(e.date) >= new Date(new Date().setHours(0,0,0,0))).length}
+                      {events.filter(e => new Date(e.dateTo || e.dateFrom) >= new Date(new Date().setHours(0,0,0,0))).length}
                     </p>
                     <p className="text-sm text-slate-500">Upcoming Events</p>
                   </div>
@@ -324,7 +448,7 @@ function Dashboard({ token, onLogout }) {
                               <div className="flex flex-wrap gap-4 text-sm text-slate-500">
                                 <span className="flex items-center gap-1.5">
                                   <Calendar className="w-4 h-4 text-dogh-primary" />
-                                  {formatDate(event.date)}
+                                  {formatDateRange(event)}
                                 </span>
                                 <span className="flex items-center gap-1.5">
                                   <Clock className="w-4 h-4 text-dogh-primary" />
@@ -428,6 +552,158 @@ function Dashboard({ token, onLogout }) {
             )}
           </>
         )}
+
+        {/* ==================== HOLIDAYS TAB ==================== */}
+        {activeTab === 'holidays' && (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Holiday Management</h2>
+                <p className="text-sm text-slate-500 mt-1">Manage holidays displayed on the public calendar</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {holidays.length === 0 && (
+                  <button
+                    onClick={handleSeedHolidays}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded-xl transition-all border border-amber-200 disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    Seed PH Holidays
+                  </button>
+                )}
+                {holidays.length > 0 && (
+                  <button
+                    onClick={handleClearAllHolidays}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-xl transition-all border border-red-200 disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Clear All
+                  </button>
+                )}
+                <button
+                  onClick={() => { resetHolidayForm(); setShowHolidayForm(true) }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-dogh-primary hover:bg-dogh-secondary text-white font-medium rounded-xl transition-all shadow-md shadow-cyan-500/20"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Holiday
+                </button>
+              </div>
+            </div>
+
+            {/* Holiday Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                    <Star className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-slate-800">{holidays.length}</p>
+                    <p className="text-sm text-slate-500">Total Holidays</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+                    <CalendarDays className="w-5 h-5 text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {holidays.filter(h => h.type === 'regular').length}
+                    </p>
+                    <p className="text-sm text-slate-500">Regular Holidays</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <CalendarDays className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {holidays.filter(h => h.type === 'special').length}
+                    </p>
+                    <p className="text-sm text-slate-500">Special Holidays</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {holidays.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
+                <Star className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">No Holidays Yet</h3>
+                <p className="text-slate-500 mb-6">Seed Philippine holidays or add holidays manually.</p>
+                <button
+                  onClick={handleSeedHolidays}
+                  disabled={loading}
+                  className="px-6 py-3 bg-dogh-primary hover:bg-dogh-secondary text-white font-medium rounded-xl transition-all disabled:opacity-50"
+                >
+                  Seed Philippine Holidays
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {holidays.map((holiday) => (
+                  <div
+                    key={holiday._id}
+                    className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-base font-semibold text-slate-800">
+                            {holiday.name}
+                          </h3>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            holiday.type === 'regular'
+                              ? 'bg-red-100 text-red-700'
+                              : holiday.type === 'special'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {holiday.type === 'regular' ? 'Regular' : holiday.type === 'special' ? 'Special' : 'Observance'}
+                          </span>
+                          {holiday.recurring && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                              Recurring
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-red-500" />
+                            {formatDate(holiday.date)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleEditHoliday(holiday)}
+                          className="p-2 hover:bg-cyan-50 text-dogh-primary rounded-lg transition-all"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteHoliday(holiday._id)}
+                          className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </main>
 
       {/* Event Form Modal */}
@@ -466,15 +742,35 @@ function Dashboard({ token, onLogout }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-dogh-primary/30 focus:border-dogh-primary transition-all text-slate-800"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Date From</label>
+                  <input
+                    type="date"
+                    value={formData.dateFrom}
+                    onChange={(e) => {
+                      const newDateFrom = e.target.value
+                      setFormData(prev => ({
+                        ...prev,
+                        dateFrom: newDateFrom,
+                        dateTo: prev.dateTo && prev.dateTo < newDateFrom ? newDateFrom : prev.dateTo
+                      }))
+                    }}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-dogh-primary/30 focus:border-dogh-primary transition-all text-slate-800"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Date To</label>
+                  <input
+                    type="date"
+                    value={formData.dateTo}
+                    min={formData.dateFrom}
+                    onChange={(e) => setFormData({ ...formData, dateTo: e.target.value })}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-dogh-primary/30 focus:border-dogh-primary transition-all text-slate-800"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -499,6 +795,10 @@ function Dashboard({ token, onLogout }) {
                   />
                 </div>
               </div>
+
+              <p className="text-xs text-slate-400">
+                For multi-day events, the time range applies to each day of the event.
+              </p>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Venue</label>
@@ -594,6 +894,101 @@ function Dashboard({ token, onLogout }) {
                 >
                   <Save className="w-4 h-4" />
                   {loading ? 'Saving...' : editingVenue ? 'Update Venue' : 'Save Venue'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Holiday Form Modal */}
+      {showHolidayForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-bold text-slate-800">
+                {editingHoliday ? 'Edit Holiday' : 'Add New Holiday'}
+              </h2>
+              <button
+                onClick={resetHolidayForm}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleHolidaySubmit} className="p-6 space-y-5">
+              {holidayFormError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-red-700 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{holidayFormError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Holiday Name</label>
+                <input
+                  type="text"
+                  value={holidayFormData.name}
+                  onChange={(e) => setHolidayFormData({ ...holidayFormData, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-dogh-primary/30 focus:border-dogh-primary transition-all text-slate-800"
+                  placeholder="e.g., Christmas Day"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
+                <input
+                  type="date"
+                  value={holidayFormData.date}
+                  onChange={(e) => setHolidayFormData({ ...holidayFormData, date: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-dogh-primary/30 focus:border-dogh-primary transition-all text-slate-800"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Type</label>
+                <select
+                  value={holidayFormData.type}
+                  onChange={(e) => setHolidayFormData({ ...holidayFormData, type: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-dogh-primary/30 focus:border-dogh-primary transition-all text-slate-800 bg-white"
+                >
+                  <option value="regular">Regular Holiday</option>
+                  <option value="special">Special Non-Working Holiday</option>
+                  <option value="observance">Observance</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="recurring"
+                  checked={holidayFormData.recurring}
+                  onChange={(e) => setHolidayFormData({ ...holidayFormData, recurring: e.target.checked })}
+                  className="w-4 h-4 text-dogh-primary border-slate-300 rounded focus:ring-dogh-primary/30"
+                />
+                <label htmlFor="recurring" className="text-sm font-medium text-slate-700">
+                  Recurring yearly
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={resetHolidayForm}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-3 bg-dogh-primary hover:bg-dogh-secondary text-white font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-cyan-500/20"
+                >
+                  <Save className="w-4 h-4" />
+                  {loading ? 'Saving...' : editingHoliday ? 'Update Holiday' : 'Save Holiday'}
                 </button>
               </div>
             </form>
