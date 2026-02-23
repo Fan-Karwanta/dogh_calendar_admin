@@ -291,17 +291,17 @@ function Dashboard({ token, onLogout }) {
   }, {})
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-cyan-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-cyan-50/40">
       {/* Top Bar */}
-      <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="bg-gradient-to-r from-dogh-dark via-dogh-secondary to-dogh-primary sticky top-0 z-50 shadow-lg shadow-dogh-dark/10">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-dogh-primary rounded-xl flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
+              <CalendarDays className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-800">DOGH Admin Panel</h1>
-              <p className="text-xs text-slate-500">Calendar Event Management</p>
+              <h1 className="text-base font-bold text-white tracking-tight">DOGH Admin Panel</h1>
+              <p className="text-[11px] text-cyan-200/60 font-medium">Calendar Event Management</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -309,24 +309,25 @@ function Dashboard({ token, onLogout }) {
               href="https://dogh-room-admin.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium rounded-xl transition-all border border-emerald-200"
+              className="hidden sm:flex items-center gap-2 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium rounded-xl transition-all border border-white/10 backdrop-blur-sm"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3.5 h-3.5" />
               Room Admin
             </a>
             <button
               onClick={() => { resetForm(); setShowForm(true) }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-dogh-primary hover:bg-dogh-secondary text-white font-medium rounded-xl transition-all shadow-md shadow-cyan-500/20"
+              className="flex items-center gap-2 px-3.5 py-2 bg-white text-dogh-primary text-sm font-semibold rounded-xl transition-all hover:bg-cyan-50 shadow-md"
             >
-              <Plus className="w-4 h-4" />
-              New Event
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">New Event</span>
+              <span className="sm:hidden">New</span>
             </button>
             <button
               onClick={onLogout}
-              className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-xl transition-all"
+              className="flex items-center gap-2 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white/80 text-sm font-medium rounded-xl transition-all border border-white/10 backdrop-blur-sm"
             >
-              <LogOut className="w-4 h-4" />
-              Logout
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
@@ -334,39 +335,48 @@ function Dashboard({ token, onLogout }) {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Tabs */}
-        <div className="flex gap-2 mb-8">
+        <div className="flex gap-1.5 mb-8 bg-white rounded-2xl p-1.5 border border-slate-200/80 shadow-sm w-fit">
           <button
             onClick={() => setActiveTab('events')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
               activeTab === 'events'
-                ? 'bg-dogh-primary text-white shadow-md shadow-cyan-500/20'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                ? 'bg-dogh-primary text-white shadow-md shadow-dogh-primary/25'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >
             <CalendarDays className="w-4 h-4" />
             Events
+            <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${
+              activeTab === 'events' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'
+            }`}>{events.length}</span>
           </button>
           <button
             onClick={() => setActiveTab('venues')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
               activeTab === 'venues'
-                ? 'bg-dogh-primary text-white shadow-md shadow-cyan-500/20'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                ? 'bg-dogh-primary text-white shadow-md shadow-dogh-primary/25'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >
             <Building2 className="w-4 h-4" />
             Venues
+            <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${
+              activeTab === 'venues' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'
+            }`}>{venues.length}</span>
           </button>
           <button
             onClick={() => setActiveTab('holidays')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
               activeTab === 'holidays'
-                ? 'bg-dogh-primary text-white shadow-md shadow-cyan-500/20'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                ? 'bg-dogh-primary text-white shadow-md shadow-dogh-primary/25'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >
             <Star className="w-4 h-4" />
             Holidays
+            <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${
+              activeTab === 'holidays' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'
+            }`}>{holidays.length}</span>
           </button>
         </div>
 
@@ -375,38 +385,38 @@ function Dashboard({ token, onLogout }) {
           <>
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-dogh-primary/10 rounded-xl flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-dogh-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-800">{events.length}</p>
-                    <p className="text-sm text-slate-500">Total Events</p>
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">{events.length}</p>
+                    <p className="text-xs text-slate-400 font-medium">Total Events</p>
                   </div>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-xl flex items-center justify-center">
                     <CalendarDays className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-800">
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">
                       {events.filter(e => new Date(e.dateTo || e.dateFrom) >= new Date(new Date().setHours(0,0,0,0))).length}
                     </p>
-                    <p className="text-sm text-slate-500">Upcoming Events</p>
+                    <p className="text-xs text-slate-400 font-medium">Upcoming Events</p>
                   </div>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-800">{venues.length}</p>
-                    <p className="text-sm text-slate-500">Registered Venues</p>
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">{venues.length}</p>
+                    <p className="text-xs text-slate-400 font-medium">Registered Venues</p>
                   </div>
                 </div>
               </div>
@@ -438,39 +448,40 @@ function Dashboard({ token, onLogout }) {
                       {group.events.map((event) => (
                         <div
                           key={event._id}
-                          className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all group"
+                          className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5 hover:shadow-md hover:border-dogh-primary/20 transition-all duration-200 group relative overflow-hidden"
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-base font-semibold text-slate-800 mb-2">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-dogh-primary/60 rounded-l-xl"></div>
+                          <div className="flex items-start justify-between pl-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-[15px] font-semibold text-slate-800 mb-2 group-hover:text-dogh-primary transition-colors">
                                 {event.title}
                               </h3>
-                              <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                              <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-slate-400">
                                 <span className="flex items-center gap-1.5">
-                                  <Calendar className="w-4 h-4 text-dogh-primary" />
+                                  <Calendar className="w-3.5 h-3.5 text-dogh-primary/50" />
                                   {formatDateRange(event)}
                                 </span>
                                 <span className="flex items-center gap-1.5">
-                                  <Clock className="w-4 h-4 text-dogh-primary" />
+                                  <Clock className="w-3.5 h-3.5 text-dogh-primary/50" />
                                   {event.timeFrom} - {event.timeTo}
                                 </span>
                                 <span className="flex items-center gap-1.5">
-                                  <MapPin className="w-4 h-4 text-dogh-primary" />
+                                  <MapPin className="w-3.5 h-3.5 text-dogh-primary/50" />
                                   {event.venue}
                                 </span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 ml-3">
                               <button
                                 onClick={() => handleEdit(event)}
-                                className="p-2 hover:bg-cyan-50 text-dogh-primary rounded-lg transition-all"
+                                className="p-2 hover:bg-cyan-50 text-dogh-primary/60 hover:text-dogh-primary rounded-lg transition-all"
                                 title="Edit"
                               >
                                 <Edit3 className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDelete(event._id)}
-                                className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all"
+                                className="p-2 hover:bg-red-50 text-red-400 hover:text-red-500 rounded-lg transition-all"
                                 title="Delete"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -594,40 +605,40 @@ function Dashboard({ token, onLogout }) {
 
             {/* Holiday Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-100 to-red-50 rounded-xl flex items-center justify-center">
                     <Star className="w-5 h-5 text-red-500" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-800">{holidays.length}</p>
-                    <p className="text-sm text-slate-500">Total Holidays</p>
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">{holidays.length}</p>
+                    <p className="text-xs text-slate-400 font-medium">Total Holidays</p>
                   </div>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-50 rounded-xl flex items-center justify-center">
                     <CalendarDays className="w-5 h-5 text-rose-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-800">
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">
                       {holidays.filter(h => h.type === 'regular').length}
                     </p>
-                    <p className="text-sm text-slate-500">Regular Holidays</p>
+                    <p className="text-xs text-slate-400 font-medium">Regular Holidays</p>
                   </div>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center">
                     <CalendarDays className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-800">
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">
                       {holidays.filter(h => h.type === 'special').length}
                     </p>
-                    <p className="text-sm text-slate-500">Special Holidays</p>
+                    <p className="text-xs text-slate-400 font-medium">Special Holidays</p>
                   </div>
                 </div>
               </div>
@@ -651,47 +662,50 @@ function Dashboard({ token, onLogout }) {
                 {holidays.map((holiday) => (
                   <div
                     key={holiday._id}
-                    className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all group"
+                    className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5 hover:shadow-md hover:border-red-200/60 transition-all duration-200 group relative overflow-hidden"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-base font-semibold text-slate-800">
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
+                      holiday.type === 'regular' ? 'bg-red-400' : holiday.type === 'special' ? 'bg-orange-400' : 'bg-slate-300'
+                    }`}></div>
+                    <div className="flex items-start justify-between pl-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <h3 className="text-[15px] font-semibold text-slate-800">
                             {holiday.name}
                           </h3>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${
                             holiday.type === 'regular'
-                              ? 'bg-red-100 text-red-700'
+                              ? 'bg-red-50 text-red-500 border border-red-100'
                               : holiday.type === 'special'
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-gray-100 text-gray-600'
+                                ? 'bg-orange-50 text-orange-500 border border-orange-100'
+                                : 'bg-gray-50 text-gray-400 border border-gray-100'
                           }`}>
                             {holiday.type === 'regular' ? 'Regular' : holiday.type === 'special' ? 'Special' : 'Observance'}
                           </span>
                           {holiday.recurring && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-50 text-blue-500 font-bold uppercase tracking-wider border border-blue-100">
                               Recurring
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
                           <span className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4 text-red-500" />
+                            <Calendar className="w-3.5 h-3.5 text-red-400/60" />
                             {formatDate(holiday.date)}
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 ml-3">
                         <button
                           onClick={() => handleEditHoliday(holiday)}
-                          className="p-2 hover:bg-cyan-50 text-dogh-primary rounded-lg transition-all"
+                          className="p-2 hover:bg-cyan-50 text-dogh-primary/60 hover:text-dogh-primary rounded-lg transition-all"
                           title="Edit"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteHoliday(holiday._id)}
-                          className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all"
+                          className="p-2 hover:bg-red-50 text-red-400 hover:text-red-500 rounded-lg transition-all"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
